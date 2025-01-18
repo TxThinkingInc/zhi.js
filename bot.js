@@ -88,6 +88,9 @@ class Bot {
                 return
             }
             this.ws.send(JSON.stringify({ MessageUUID: m.MessageUUID }))
+            if (!this.chats[m.ChatUUID]) {
+                return
+            }
             var s = await zhi.decrypt_payload(this.chats[m.ChatUUID].Key, m.ChatUUID, m.UserUUID, m.Payload)
             var o = JSON.parse(s)
             delete m.Payload
