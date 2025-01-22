@@ -7,13 +7,14 @@ https://www.txthinking.com/zhi.html
 ```
 import Bot from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/bot.js'
 
-var bot = await Bot.init("Bot Token", [
+var bot = await Bot.init("Bot Token", [ // get from https://www.txthinking.com/zhi.html
+    // One Bot Token can be used in multiple Chats
     {
         ChatUUID: "", // get from https://www.txthinking.com/zhi.html
         Key: "", // your Chat Key
         UserUUID: "", // get from https://www.txthinking.com/zhi.html
-        Name: "Bot",
-        Avatar: "/root/robot.png",
+        Name: "Bot", // bot name
+        Avatar: "/root/robot.png", // bot avatar, file path
     },
 ])
 await bot.connect()
