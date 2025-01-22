@@ -28,6 +28,6 @@ bot.close()
 ## Install bun via [nami](https://github.com/txthinking/nami) and Run
 
 ```
-nami install bun bunu
+nami install bun bun.plus
 bun --preload ~/.nami/bin/_bun_import_url.js your.js
 ```
