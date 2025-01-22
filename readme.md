@@ -18,6 +18,9 @@ var bot = await Bot.init("Bot Token", [ // get from https://www.txthinking.com/z
     },
 ])
 await bot.connect()
+bot.on_message(function(m) { // must call this method, ACK will be responded inside.
+    console.log(m)
+})
 await bot.send_text("The ChatUUID", "Hello")
 bot.close()
 ```
