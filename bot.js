@@ -6,49 +6,63 @@ import os from 'node:os';
 import { $ } from 'bun';
 
 class Bot {
-    // chats: [{
-    //  ChatUUID: "", // get from https://www.txthinking.com/zhi.html
-    //  Key: "", // your Chat Key
-    //  UserUUID: "", // get from https://www.txthinking.com/zhi.html
-    //  Name: "", // bot name
-    //  Avatar: "", // bot avatar, file path
-    // }]
+    // chats: [
+    //  {
+    //      ChatUUID: "",   // get from https://www.txthinking.com/zhi.html
+    //      Key: "",        // your Chat Key
+    //      UserUUID: "",   // get from https://www.txthinking.com/zhi.html
+    //      Name: "",       // bot name
+    //      AvatarUUID: "", // AvatarUUID you maked
+    //  },
+    // ]
     static async init(BotToken, chats) {
-        var f = Bun.file(os.homedir() + "/.zhi.bot")
-        var j = {}
-        if (await f.exists()) {
-            j = JSON.parse(await f.text())
-        }
-        for (var i = 0; i < chats.length; i++) {
-            if (j[chats[i].ChatUUID] && j[chats[i].ChatUUID].Avatar == chats[i].Avatar) {
-                chats[i].AvatarUUID = j[chats[i].ChatUUID].AvatarUUID
-                continue
-            }
-            var b = await Bun.file(chats[i].Avatar).bytes()
-            var res = await fetch(`https://upload.zhi.shiliew.com/?ChatUUID=${chats[i].ChatUUID}&Kind=avatar&Token=${BotToken}`, {
-                method: "PUT",
-                body: await zhi.encrypt_file(chats[i].Key, chats[i].ChatUUID, chats[i].UserUUID, b),
-            })
-            if (res.status != 200) {
-                throw await res.text()
-            }
-            chats[i].AvatarUUID = await res.text()
-        }
-        var cache = {}
         var cs = {}
-        chats.forEach(v => {
-            cache[v.ChatUUID] = {
-                Avatar: v.Avatar,
-                AvatarUUID: v.AvatarUUID,
+        if (chats.find(v => v.Avatar)) {
+            // compatible
+            var f = Bun.file(os.homedir() + "/.zhi.bot")
+            var j = {}
+            if (await f.exists()) {
+                j = JSON.parse(await f.text())
             }
-            cs[v.ChatUUID] = {
-                Key: v.Key,
-                UserUUID: v.UserUUID,
-                Name: v.Name,
-                AvatarUUID: v.AvatarUUID,
+            for (var i = 0; i < chats.length; i++) {
+                if (j[chats[i].ChatUUID] && j[chats[i].ChatUUID].Avatar == chats[i].Avatar) {
+                    chats[i].AvatarUUID = j[chats[i].ChatUUID].AvatarUUID
+                    continue
+                }
+                var b = await Bun.file(chats[i].Avatar).bytes()
+                var res = await fetch(`https://upload.zhi.shiliew.com/?ChatUUID=${chats[i].ChatUUID}&Kind=avatar&Token=${BotToken}`, {
+                    method: "PUT",
+                    body: await zhi.encrypt_file(chats[i].Key, chats[i].ChatUUID, chats[i].UserUUID, b),
+                })
+                if (res.status != 200) {
+                    throw await res.text()
+                }
+                chats[i].AvatarUUID = await res.text()
             }
-        })
-        await Bun.write(os.homedir() + "/.zhi.bot", JSON.stringify(cache));
+            var cache = {}
+            chats.forEach(v => {
+                cache[v.ChatUUID] = {
+                    Avatar: v.Avatar,
+                    AvatarUUID: v.AvatarUUID,
+                }
+                cs[v.ChatUUID] = {
+                    Key: v.Key,
+                    UserUUID: v.UserUUID,
+                    Name: v.Name,
+                    AvatarUUID: v.AvatarUUID,
+                }
+            })
+            await Bun.write(os.homedir() + "/.zhi.bot", JSON.stringify(cache));
+        } else {
+            chats.forEach(v => {
+                cs[v.ChatUUID] = {
+                    Key: v.Key,
+                    UserUUID: v.UserUUID,
+                    Name: v.Name,
+                    AvatarUUID: v.AvatarUUID,
+                }
+            })
+        }
         return new Bot(BotToken, cs);
     }
     constructor(token, chats) {
