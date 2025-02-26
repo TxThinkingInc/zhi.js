@@ -2,13 +2,13 @@
 
 https://www.txthinking.com/zhi.html
 
-## Install bun via [nami](https://github.com/txthinking/nami) and Run
+## Install bun via [nami](https://github.com/txthinking/nami)
 
 ```
 nami install bun bun.plus
 ```
 
-### Make AvatarUUID
+## Make AvatarUUID
 
 > You only need to make AvatarUUID once for each Chat
 
@@ -38,7 +38,7 @@ console.log(AvatarUUID)
 bun --preload ~/.nami/bin/_bun_import_url.js your.js
 ```
 
-### Run Bot
+## Run Bot
 
 ```
 import Bot from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/bot.js'
