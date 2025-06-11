@@ -70,12 +70,14 @@ class Bot {
         this.device = v4()
         this.chats = chats
         this.ws = null
+        this.intervalId = null
     }
     connect() {
         return new Promise((resolve, reject) => {
             var ws = new WebSocket(`wss://api.txthinking.com/im/node/ws?Token=${this.token}&Device=${this.device}`);
             ws.onopen = () => {
                 this.ws = ws
+                this.intervalId = setInterval(() => ws.ping(), 10000)
                 resolve();
             }
             ws.onerror = (error) => reject(error);
@@ -90,6 +92,7 @@ class Bot {
     // f(reason)
     on_close(f) {
         this.ws.addEventListener("close", e => {
+            if (this.intervalId) clearInterval(this.intervalId)
             f(e.reason)
         });
     }
