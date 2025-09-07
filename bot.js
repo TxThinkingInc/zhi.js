@@ -1,6 +1,6 @@
 import lib from 'https://bash.ooo/lib.js';
 import zhi from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/lib.js';
-import { v4, v7 } from 'uuid';
+import { v4, v7 } from 'uuid@11';
 import path from 'node:path';
 import os from 'node:os';
 import { $ } from 'bun';
