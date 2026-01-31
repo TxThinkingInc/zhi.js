@@ -67,7 +67,7 @@ class Bot {
     }
     constructor(token, chats) {
         this.token = token
-        this.device = v4()
+        this.device = v4() // Each connection must has different Device string. One Device string should only has one connection.
         this.chats = chats
         this.ws = null
         this.intervalId = null
