@@ -58,7 +58,6 @@ bot.on_message(async function(m) {
     // reply a message
     await bot.send_text(m.ChatUUID, "Yes!")
 })
-bot.close()
 ```
 
 ```
