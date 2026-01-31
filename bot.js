@@ -67,7 +67,13 @@ class Bot {
     }
     constructor(token, chats) {
         this.token = token
-        this.device = v4() // Each connection must has different Device string. One Device string should only has one connection.
+        // Each connection must has different Device string. One Device string should only has one connection.
+        // If the server finds that a connection with the same Device string already exists, the server will reject the connection.
+        //
+        // If you implement your own reconnection mechanism,
+        // you should ensure that you wait for the previous connection to be released.
+        // A reconnection interval of 60 seconds or less is recommended.
+        this.device = v4()
         this.chats = chats
         this.ws = null
         this.intervalId = null
