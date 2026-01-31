@@ -2,7 +2,6 @@ import lib from 'https://bash.ooo/lib.js';
 import zhi from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/lib.js';
 import { v4, v7 } from 'uuid@11';
 import path from 'node:path';
-import os from 'node:os';
 import { $ } from 'bun';
 
 class Bot {
@@ -17,108 +16,81 @@ class Bot {
     // ]
     static async init(BotToken, chats) {
         var cs = {}
-        if (chats.find(v => v.Avatar)) {
-            // compatible
-            var f = Bun.file(os.homedir() + "/.zhi.bot")
-            var j = {}
-            if (await f.exists()) {
-                j = JSON.parse(await f.text())
+        chats.forEach(v => {
+            cs[v.ChatUUID] = {
+                Key: v.Key,
+                UserUUID: v.UserUUID,
+                Name: v.Name,
+                AvatarUUID: v.AvatarUUID,
             }
-            for (var i = 0; i < chats.length; i++) {
-                if (j[chats[i].ChatUUID] && j[chats[i].ChatUUID].Avatar == chats[i].Avatar) {
-                    chats[i].AvatarUUID = j[chats[i].ChatUUID].AvatarUUID
-                    continue
-                }
-                var b = await Bun.file(chats[i].Avatar).bytes()
-                var res = await fetch(`https://upload.zhi.shiliew.com/?ChatUUID=${chats[i].ChatUUID}&Kind=avatar&Token=${BotToken}`, {
-                    method: "PUT",
-                    body: await zhi.encrypt_file(chats[i].Key, chats[i].ChatUUID, chats[i].UserUUID, b),
-                })
-                if (res.status != 200) {
-                    throw await res.text()
-                }
-                chats[i].AvatarUUID = await res.text()
-            }
-            var cache = {}
-            chats.forEach(v => {
-                cache[v.ChatUUID] = {
-                    Avatar: v.Avatar,
-                    AvatarUUID: v.AvatarUUID,
-                }
-                cs[v.ChatUUID] = {
-                    Key: v.Key,
-                    UserUUID: v.UserUUID,
-                    Name: v.Name,
-                    AvatarUUID: v.AvatarUUID,
-                }
-            })
-            await Bun.write(os.homedir() + "/.zhi.bot", JSON.stringify(cache));
-        } else {
-            chats.forEach(v => {
-                cs[v.ChatUUID] = {
-                    Key: v.Key,
-                    UserUUID: v.UserUUID,
-                    Name: v.Name,
-                    AvatarUUID: v.AvatarUUID,
-                }
-            })
-        }
+        })
         return new Bot(BotToken, cs);
     }
     constructor(token, chats) {
         this.token = token
-        // Each connection must has different Device string. One Device string should only has one connection.
-        // If the server finds that a connection with the same Device string already exists, the server will reject the connection.
-        //
-        // If you implement your own reconnection mechanism,
-        // you should ensure that you wait for the previous connection to be released.
-        // A reconnection interval of 60 seconds or less is recommended.
-        this.device = v4()
         this.chats = chats
         this.ws = null
         this.intervalId = null
+        this.on_message_f = null
+        this.on_error_f = null
+        this.on_close_f = null
     }
     connect() {
         return new Promise((resolve, reject) => {
-            var ws = new WebSocket(`wss://api.txthinking.com/im/node/ws?Token=${this.token}&Device=${this.device}`);
-            ws.onopen = () => {
+            var ws = new WebSocket(`wss://api.txthinking.com/im/node/ws?Token=${this.token}&Device=${v4()}`);
+            ws.addEventListener("open", e => {
                 this.ws = ws
                 this.intervalId = setInterval(() => ws.ping(), 10000)
                 resolve();
-            }
-            ws.onerror = (error) => reject(error);
+            })
+            ws.addEventListener("error", e => {
+                reject(e)
+                if (this.on_error_f) {
+                    this.on_error_f(e)
+                }
+            })
+            ws.addEventListener("close", e => {
+                reject(e.reason)
+                if (this.intervalId) clearInterval(this.intervalId)
+                if (this.on_close_f) {
+                    this.on_close_f(e.reason)
+                }
+            })
+            ws.addEventListener("message", async e => {
+                var m = JSON.parse(e.data)
+
+                // a message sent successful
+                if (!m.Payload) {
+                    return
+                }
+
+                // ack
+                ws.send(JSON.stringify({ MessageUUID: m.MessageUUID }))
+
+                // new message
+                if (!this.chats[m.ChatUUID]) {
+                    return
+                }
+                var s = await zhi.decrypt_payload(this.chats[m.ChatUUID].Key, m.ChatUUID, m.UserUUID, m.Payload)
+                var o = JSON.parse(s)
+                delete m.Payload
+                if (this.on_message_f) {
+                    this.on_message_f({ ...o, ...m })
+                }
+            })
         });
     }
     // f(e)
     on_error(f) {
-        this.ws.addEventListener("error", e => {
-            f(e)
-        });
+        this.on_error_f = f
     }
     // f(reason)
     on_close(f) {
-        this.ws.addEventListener("close", e => {
-            if (this.intervalId) clearInterval(this.intervalId)
-            f(e.reason)
-        });
+        this.on_close_f = f
     }
     // f(message)
     on_message(f) {
-        this.ws.addEventListener("message", async e => {
-            var m = JSON.parse(e.data)
-            if (!m.Payload) {
-                // a message sent successful
-                return
-            }
-            this.ws.send(JSON.stringify({ MessageUUID: m.MessageUUID }))
-            if (!this.chats[m.ChatUUID]) {
-                return
-            }
-            var s = await zhi.decrypt_payload(this.chats[m.ChatUUID].Key, m.ChatUUID, m.UserUUID, m.Payload)
-            var o = JSON.parse(s)
-            delete m.Payload
-            f({ ...o, ...m })
-        });
+        this.on_message_f = f
     }
     // you should call close if no need bot
     close() {

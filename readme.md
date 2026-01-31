@@ -43,7 +43,6 @@ bun --preload ~/.nami/bin/_bun_import_url.js your.js
 ```
 import Bot from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/bot.js'
 
-// This will create a Client with a random Device UUID string, read bot.js for more.
 var bot = await Bot.init("Bot Token", [ // get from https://www.txthinking.com/zhi.html, one Bot Token can be used in multiple Chats
     {
         ChatUUID: "",   // get from https://www.txthinking.com/zhi.html
@@ -53,28 +52,75 @@ var bot = await Bot.init("Bot Token", [ // get from https://www.txthinking.com/z
         AvatarUUID:"",  // AvatarUUID you maked
     },
 ])
-
-// You should call connect only once, then use the Client like 'daemon'.
-//
-// The Client(based on Device UUID string) should only has one connection.
-// If the server finds that a Client(based on Device UUID string) already has a connection, the server will reject the incoming connection.
-//
-// If you implement your own reconnection mechanism, you should ensure that call connect waiting the previous connection to be released.
-// A reconnection interval of waiting 60 seconds or less is recommended.
 await bot.connect()
-
-// You must call on_message for listening new messages, ACK will be responded inside.
-bot.on_message(function(m) {
+bot.on_message(async function(m) {
     console.log(m)
+    // reply a message
+    await bot.send_text(m.ChatUUID, "Yes!")
 })
-
-// When you want to send message, such as text, call send_text at where you want.
-await bot.send_text("The ChatUUID", "Hello")
-
-// You should only call close when you don't need the Client at all. Or want to reconnect: close, wait a moment, connect.
 bot.close()
 ```
 
 ```
 bun --preload ~/.nami/bin/_bun_import_url.js your.js
+```
+
+## Example: One-shot
+
+A common scenario is sending infrequent but important notifications.
+
+```
+import Bot from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/bot.js'
+
+async function notify(str){
+    var bot = await Bot.init("Bot Token", [
+        {
+            ChatUUID: "",   
+            Key: "",        
+            UserUUID: "",   
+            Name: "",       
+            AvatarUUID:"",  
+        },
+    ])
+    await bot.connect()
+    await bot.send_text("The ChatUUID", str)
+    bot.close()
+}
+
+await notify("something went wrong")
+```
+
+## Example: Long-running
+
+```
+import Bot from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/bot.js'
+
+var bot = await Bot.init("Bot Token", [
+    {
+        ChatUUID: "",   
+        Key: "",        
+        UserUUID: "",   
+        Name: "",       
+        AvatarUUID:"",  
+    },
+])
+
+await bot.connect()
+
+// Reconnect
+bot.on_close(async function(e) {
+    console.log("close", e)
+    bot.close()
+    await Bun.sleep(60*1000); // 60s or less
+    await bot.connect()
+})
+
+bot.on_message(async function(m) {
+    console.log(m)
+    // reply a message
+    await bot.send_text(m.ChatUUID, "Yes!")
+})
+
+// or send a message at where you want
+await bot.send_text("The ChatUUID", "Yes!")
 ```
