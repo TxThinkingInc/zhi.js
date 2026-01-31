@@ -6,7 +6,7 @@ import os from 'node:os';
 import { $ } from 'bun';
 
 class Bot {
-    // chats: [
+    // [
     //  {
     //      ChatUUID: "",   // get from https://www.txthinking.com/zhi.html
     //      Key: "",        // your Chat Key
@@ -152,7 +152,7 @@ class Bot {
             })),
         }))
     }
-    // file path
+    // file local path
     // require: $ nami install ffmpeg
     async send_image(ChatUUID, file) {
         var FileName = path.basename(file)
@@ -191,7 +191,7 @@ class Bot {
             })),
         }))
     }
-    // file path
+    // file local path
     // require: $ nami install ffmpeg
     async send_video(ChatUUID, file) {
         var FileName = path.basename(file)
@@ -245,7 +245,7 @@ class Bot {
             })),
         }))
     }
-    // file path
+    // file local path
     async send_file(ChatUUID, file) {
         var FileName = path.basename(file)
         var i = FileName.lastIndexOf(".");
