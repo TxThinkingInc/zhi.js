@@ -66,7 +66,7 @@ bun --preload ~/.nami/bin/_bun_import_url.js your.js
 
 ## Example: One-shot
 
-A common scenario is sending infrequent but important notifications.
+A common scenario is sending **infrequent** but important notifications.
 
 ```
 import Bot from 'https://raw.githubusercontent.com/TxThinkingInc/zhi.js/refs/heads/master/bot.js'
